@@ -1,0 +1,19 @@
+name: DORIS
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy=1.23
+  - python
+  - seaborn
+  - matplotlib
+  - pandas
+  - scikit-learn
+  - scipy
+  - pmdarima
+  - ipykernel
+  - requests
+  - beautifulsoup4
+  - unlzw3
+
+prefix: /Users/youmans/anaconda3/envs/DORIS
