@@ -13,7 +13,12 @@ Options:
                         list of 3-letter sattelite id (type "zzz" for full list) (default: ['zzz'])
   -b BEGIN, --begin BEGIN
                         last 2 digits of year of first position (default: 00)
-  -e END, --end END     last 2 digits of year of last position (default: 24) 
+  -e END, --end END     
+                        last 2 digits of year of last position (default: 24) 
+  -o PATH, --path PATH 
+                        path to save .csv file(s)
+  -fn FILENAME, --filename FILENAME
+                        filename of .csv file
 
 Strategy:
 The script connects to https://cddis.nasa.gov/archive/doris/products/orbits/ using predefined authentification data.
@@ -57,10 +62,9 @@ import time
 
 
 # IMPORT UTILITY FUNCIONS
-cwd = Path(os.getcwd()) # current working directory
-wd = cwd.parent.absolute() # working directory
+wd = str(Path(__file__).resolve().parents[1]) # working directory: /DORIS/
 
-sys.path.append(str(wd) + '/src/')# append path to ../src/ for following imports
+sys.path.append(wd + '/src/')# append path to ../src/ for following imports
 
 import dl_utils  as dlu
 import df_utils as dfu
@@ -81,7 +85,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--sat', default=['zzz'], nargs='*', type=str, help='list of 3-letter sattelite id (type "zzz" for full list)')
     parser.add_argument('-b', '--begin', default=0 ,type=int, help='last 2 digits of year of first position')
     parser.add_argument('-e', '--end', default=0, type=int, help='last 2 digits of year of last position (inlusive in search)')
-    parser.add_argument('-o', '--path', default=str(wd)+'/tmp/', type=str, help='(create) directory to save .csv-file')
+    parser.add_argument('-o', '--path', default=wd+'/sat/', type=str, help='(create) directory to save .csv-file')
     parser.add_argument('-fn', '--filename', default='sat.csv', type=str, help='filename.csv (including extension)')
     args = vars(parser.parse_args())
 
@@ -107,10 +111,10 @@ if __name__ == "__main__":
     e = re.compile(r'.*e([0-9][0-9]).*'.format(t=begin))
 
     # SETUP
-    Path(str(wd) + '/tmp').mkdir(parents=True, exist_ok=True) # create ./tmp folder if not existing
+    Path(wd + '/tmp/').mkdir(parents=True, exist_ok=True) # create DORIS/tmp folder if not existing
     Path(args['path']).mkdir(parents=True, exist_ok=True) # creates folder (including parents) of indicated paths if not existing
 
-    PATH_TMP = str(wd) + '/tmp/'
+    PATH_TMP = wd + '/tmp/'
     PATH = args['path']+args['filename']
 
     MAX_RETRIES = 10
@@ -271,6 +275,11 @@ if __name__ == "__main__":
                 except Exception as e:
                     print(f'An error occured: {e}')
             print('\n... done. All set.')
+
+            try:
+                os.rmdir(wd+'/tmp/')
+            except Exception as e:
+                print(f'An error occured: {e}')
                              
         else:
             print('Login failed.\n')

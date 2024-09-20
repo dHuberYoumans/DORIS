@@ -7,15 +7,17 @@ import os
 import sys
 from pathlib import Path
 
-cwd = Path(os.getcwd()) # current working directory
-wd = cwd.parent.absolute() # working directory
+wd = str(Path(__file__).resolve().parents[1]) # working directory: /DORIS/
+Path(wd + '/ref/').mkdir(parents=True, exist_ok=True) # create DORIS/ref/ if not existing 
+Path(wd + '/ref/tmp/').mkdir(parents=True, exist_ok=True) # create DORIS/ref/tmp/ if not existing 
 
-sys.path.append(str(wd)+'/src/')# append path to ../src/ for following imports
+
+sys.path.append(wd+'/src/')# append path to DORIS/src/ for following imports
 
 import misc_utils as misc 
 
 url = 'https://ids-doris.org/analysis-documents.html'
-PATH = Path(wd + '/ref').mkdir(parents=True, exist_ok=True)
+PATH = wd + '/ref/'
 
 sat_id = {
     'SPOT2':'sp2',
@@ -115,5 +117,10 @@ if __name__ == "__main__":
             misc.progress_bar(i,len(files))
         except Exception as e:
             print(f'An error occured: {e}')
+            
+    try:
+        os.rmdir(wd+'/ref/tmp/')
+    except Exception as e:
+        print(f'An error occured: {e}')
     print('')
     print('...done.')
