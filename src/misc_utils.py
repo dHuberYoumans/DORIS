@@ -6,7 +6,7 @@ import sys
 def progress_bar(count,total):
     """
     """
-    bar_length = 80
+    bar_length = 65
     filled = int(
         round( bar_length*count / float(total) )
         )
@@ -23,7 +23,7 @@ def progress_bar_II(total:int):
 
     count = shared.value
     
-    bar_length = 80
+    bar_length = 65
     filled = int(
         round( bar_length*count / float(total) ))
     percentage = round( 100*count / float(total), 1 )
