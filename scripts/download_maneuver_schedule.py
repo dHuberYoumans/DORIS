@@ -5,12 +5,17 @@ import pandas as pd
 from datetime import datetime, timedelta
 import os
 import sys
-sys.path.append('src/')# append path to IDS/src/ for following imports
+from pathlib import Path
+
+cwd = Path(os.getcwd()) # current working directory
+wd = cwd.parent.absolute() # working directory
+
+sys.path.append(str(wd)+'/src/')# append path to ../src/ for following imports
 
 import misc_utils as misc 
 
 url = 'https://ids-doris.org/analysis-documents.html'
-PATH = '/Users/youmans/Desktop/TTM/training/IDS/references/'
+PATH = Path(wd + '/ref').mkdir(parents=True, exist_ok=True)
 
 sat_id = {
     'SPOT2':'sp2',

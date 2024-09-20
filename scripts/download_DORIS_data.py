@@ -57,8 +57,10 @@ import time
 
 
 # IMPORT UTILITY FUNCIONS
-cwd = os.getcwd()
-sys.path.append(cwd + '/src/')# append path to IDS/src/ for following imports
+cwd = Path(os.getcwd()) # current working directory
+wd = cwd.parent.absolute() # working directory
+
+sys.path.append(str(wd) + '/src/')# append path to ../src/ for following imports
 
 import dl_utils  as dlu
 import df_utils as dfu
@@ -79,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--sat', default=['zzz'], nargs='*', type=str, help='list of 3-letter sattelite id (type "zzz" for full list)')
     parser.add_argument('-b', '--begin', default=0 ,type=int, help='last 2 digits of year of first position')
     parser.add_argument('-e', '--end', default=0, type=int, help='last 2 digits of year of last position (inlusive in search)')
-    parser.add_argument('-o', '--path', default=cwd+'/tmp/', type=str, help='(create) directory to save .csv-file')
+    parser.add_argument('-o', '--path', default=str(wd)+'/tmp/', type=str, help='(create) directory to save .csv-file')
     parser.add_argument('-fn', '--filename', default='sat.csv', type=str, help='filename.csv (including extension)')
     args = vars(parser.parse_args())
 
@@ -105,10 +107,10 @@ if __name__ == "__main__":
     e = re.compile(r'.*e([0-9][0-9]).*'.format(t=begin))
 
     # SETUP
-    Path(cwd + '/tmp').mkdir(parents=True, exist_ok=True) # create ./tmp folder if not already existing
-    Path(args['path']).mkdir(parents=True, exist_ok=True) # creates folder (including parents) of indicated paths if not already existing
+    Path(str(wd) + '/tmp').mkdir(parents=True, exist_ok=True) # create ./tmp folder if not existing
+    Path(args['path']).mkdir(parents=True, exist_ok=True) # creates folder (including parents) of indicated paths if not existing
 
-    PATH_TMP = cwd + '/tmp/'
+    PATH_TMP = str(wd) + '/tmp/'
     PATH = args['path']+args['filename']
 
     MAX_RETRIES = 10
