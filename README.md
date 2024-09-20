@@ -1,2 +1,2 @@
 # DORIS
-Maneuver detection algorithm for DORIS satellite cluster
+Maneuver detection algorithm project for DORIS satellite cluster
