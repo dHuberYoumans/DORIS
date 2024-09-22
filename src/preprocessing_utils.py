@@ -41,7 +41,24 @@ class DropDuplIdx(BaseEstimator, TransformerMixin):
         
         return sat_
     
-class LoadSat(BaseEstimator, TransformerMixin):
+class LoadSingleSat(BaseEstimator, TransformerMixin):
+    def __init__(self,path=None):
+        self.path = path
+
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self,X=None):
+        """
+        Load and return the DORIS .csv-file in single DataFrame (with DateTime index) with sorted index
+        """
+
+        dtypes_ = {'time_stamp':'str','x':'float','y':'float','z':'float','vx':'float','vy':'float','vz':'float'}
+        sat_ = pd.read_csv(self.path,index_col=[0],dtype=dtypes_,parse_dates=['time_stamp'])
+    
+        return sat_.sort_index() 
+    
+class LoadSats(BaseEstimator, TransformerMixin):
     def __init__(self,path=None):
         self.path = path
 
