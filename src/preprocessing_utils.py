@@ -1,6 +1,18 @@
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 
+import os
+import sys
+from pathlib import Path
+
+# GET CURRENT WORKING DIRECTORY
+cwd = Path(os.getcwd())
+
+# APPEND /src/ TO PATH TO IMPORT kutils
+sys.path.append(str(cwd.parent)+'/src/')
+
+import kepler_utils as kutls
+
 class ConvertUnits(BaseEstimator, TransformerMixin):
 
     def __init__(self):
@@ -75,4 +87,41 @@ class LoadSats(BaseEstimator, TransformerMixin):
     
         return sat_.sort_index() 
         
-   
+class OrbitalElements(BaseEstimator, TransformerMixin):
+    def __init__(self,type:str='kepler',custom_elements=None):
+        self.elements_type = type
+        self.custom_elements = custom_elements
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self,sat):
+        sat_ = sat.copy()
+        data_ = {}
+
+        if self.elements_type == 'kepler':
+            elements_ = ['a','e','i','nu','omega','Omega']
+
+        elif self.elements_type == 'equinoctial':
+            elements_ = ['p','f','g','q1','q2','L']
+
+        elif self.elements_type == 'all':
+            elements_ = ['a','e','i','nu','omega','Omega','p','f','g','q1','q2','L','E','M','n']
+
+        elif self.elements_type == 'custom':
+            elements_ = self.custom_elements
+
+
+        for elem in elements_:
+            data_[elem] = eval(f'kutls.{elem}(sat).reshape(-1,)')
+
+        orbital_elements_ = pd.DataFrame(data=data_).set_index(sat_.index)
+
+        sat_ = pd.concat([sat_,orbital_elements_],axis=1)
+
+        return sat_
+
+
+    
+
+    
