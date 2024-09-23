@@ -97,7 +97,6 @@ def h(df) -> np.array:
 
     return norm(h_vec)
 
-
 def a(df):
     """
     Computes semi-major axis $a$ from DataFrame containing position (x,y,z) and velocity (vx,vy,vz)
@@ -129,7 +128,7 @@ def i(df):
 
     return np.arccos(h_hat_z).reshape(-1,1)
 
-def RAAN(df):
+def RAAN_vec(df):
     """
     Computes the the Right Ascension of the Ascending Node $N$ from DataFrame containing position (x,y,z) and velocity (vx,vy,vz)
     """
@@ -143,15 +142,15 @@ def Omega(df):
     """
     Computes the longitude of the ascending node $\Omega$ from DataFrame containing position (x,y,z) and velocity (vx,vy,vz)
     """
-    N_hat = hat(RAAN(df))
+    N_hat = hat(RAAN_vec(df))
     N_hat_x = N_hat[:,0]
     N_hat_y = N_hat[:,1]
 
-    this_Omega = np.zeros_like(N_hat_x) # create Omega data frame of same length as N
-    this_Omega[(N_hat_y < 0)] = 2*np.pi - np.arccos(N_hat_x[(N_hat_y < 0)]) # populate Omega where Ny < 0
-    this_Omega[(N_hat_y >= 0)] = np.arccos(N_hat_x[(N_hat_y >= 0)]) # populate Omega where Ny >= 0
+    Omega_ = np.zeros_like(N_hat_x) # create Omega data frame of same length as N
+    Omega_[(N_hat_y < 0)] = 2*np.pi - np.arccos(N_hat_x[(N_hat_y < 0)]) # populate Omega where Ny < 0
+    Omega_[(N_hat_y >= 0)] = np.arccos(N_hat_x[(N_hat_y >= 0)]) # populate Omega where Ny >= 0
 
-    return this_Omega.reshape(-1,1)
+    return Omega_.reshape(-1,1)
 
 def omega(df):
     """
@@ -162,9 +161,15 @@ def omega(df):
 
     e_hat = hat(np.cross(v_vec,hvec(df)) / (G*M_earth) - hat(r_vec))
 
-    N_hat = hat(RAAN(df))
+    if any(i(df) < 1E-9):
+        e_vec = Avec(df)
+        ex = e_vec[:,1]
+        ey = e_vec[:,2]
+        arg_eN = np.arctan(ey/ex)
+    else:
+        N_hat = hat(RAAN_vec(df))
 
-    arg_eN = np.sum(e_hat*N_hat,axis=1) # arg_eN = arccos( e*N / |e| |N| ) = angle between e and N
+        arg_eN = np.sum(e_hat*N_hat,axis=1) # arg_eN = arccos( e*N / |e| |N| ) = angle between e and N
 
     this_omega = np.zeros_like(arg_eN) # create omega data frame of same length as e
 
@@ -196,20 +201,20 @@ def M(df):
     """
     Computes the mean anomaly $M$ from DataFrame containing position (x,y,z) and velocity (vx,vy,vz)
     """
-    EE = E(df) # mean eccentric anomaly
+    E_ = E(df) # mean eccentric anomaly
 
-    return EE - e(df)*np.sin(EE)
+    return E_ - e(df)*np.sin(E_)
 
 def n(df):
     """
     Computes the mean motion $n$ from DataFrame containing position (x,y,z) and velocity (vx,vy,vz)
     """
-    aa = a(df) # semi-major axis
-    ee = e(df) # eccentricity 
-    bb = np.sqrt(aa**2 - ee**2) # semi-minor axis
-    hh = h(df) # norm of orbital momentum
+    a_ = a(df) # semi-major axis
+    e_ = e(df) # eccentricity 
+    b_ = np.sqrt(a_**2 - e_**2) # semi-minor axis
+    h_ = h(df) # norm of orbital momentum
 
-    return hh / (aa*bb)
+    return h_ / (a_*b_)
 
 #  MODIFIED EQUINOCTIAL ORBITAL ELEMENTS (better behaved for i = 0, e = 0)
 
@@ -223,25 +228,55 @@ def f(df):
     """
     Computes $f = e \cos(\omega + \Omega)$ from DataFrame containing position (x,y,z) and velocity (vx,vy,vz)
     """
-    return e(df)*np.cos(omega(df) + Omega(df))
+    e_ = e(df)
+    omega_ = omega(df)
+    Omega_ = Omega(df)
+
+    if any(e_ < 1E-9):
+        return np.zeros_like(df).reshape(-1,1)
+    else:
+        if any(np.isnan(Omega_)):
+            return e_*np.cos(omega_)
+        else:
+            return e_*np.cos(omega_ + Omega_)
 
 def g(df):
     """
     Computes $g = e \sin(\omega + \Omega)$ from DataFrame containing position (x,y,z) and velocity (vx,vy,vz)
     """
-    return e(df)*np.sin(omega(df) + Omega(df))
+    e_ = e(df)
+    omega_ = omega(df)
+    Omega_ = Omega(df)
+
+    if any(e_ < 1E-9):
+        return np.zeros_like(df).reshape(-1,1)
+    else:
+        if any(np.isnan(Omega_)):
+            return e_*np.sin(omega_)
+        else:
+            return e_*np.sin(omega_ + Omega_)
 
 def q1(df):
     """
     Computes $q_1 =  \tan(i / 2) \cos(\Omega)$ from DataFrame containing position (x,y,z) and velocity (vx,vy,vz)
     """
-    return np.tan( i(df) / 2 ) * np.cos(Omega(df))
+    i_ = i(df)
+
+    if any(i_ < 1E-9):
+        return np.zeros_like(df).reshape(-1,1)
+    else:
+        return np.tan( i_ / 2 ) * np.cos(Omega(df))
 
 def q2(df):
     """
     Computes $q_1 =  \tan(i / 2) \cos(\Omega)$ from DataFrame containing position (x,y,z) and velocity (vx,vy,vz)
     """
-    return np.tan( i(df) / 2 ) * np.sin(Omega(df))
+    i_ = i(df)
+
+    if any(i_ < 1E-9):
+        return np.zeros_like(df).reshape(-1,1)
+    else:
+        return np.tan( i_/ 2 ) * np.sin(Omega(df))
 
 def L(df):
     """
