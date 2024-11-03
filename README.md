@@ -12,7 +12,18 @@ Python scripts are provided to download data for various satellites, time frames
 
 ##### Table of Contents
 - [Getting Around](#getting-around)
+    * [literature](#literature)
+    * [notebooks](#notebooks)
+    * [refs](#ref)
+    * [requirements.yml](#requirementsyml)
+    * [sat](#sat)
+    * [scripts](#scripts)
+    * [src](#src)
+
+
 - [Getting Started](#getting-started)
+    * [Installing the Virtual Environment](#installing-the-virtual-environment)
+    * [Downloading Sample Data](#downloading-sample-data)
 
 ## Getting Around
 
@@ -75,8 +86,72 @@ It is the output of the script `download_DORIS_data.py` script, which allows to 
 
 ### scripts
 
+This folder contains the Python scripts `download_maneuver_schedule.py` and `download_DORIS_data.py` to download the scheduled manoeuvres and the satellite data respectively. 
+
 ### src
+
+The source folder contains various custom modules which define convenience functions of different purpose. 
+
+* `ana_utils.py`: utility methods for analysis purposes
+* `df_utils.py`:  utility methods for data frames
+* `dl_utils.py`:  utility methods for downloads
+* `kepler_utils.py`: utility methods to compute orbital elements
+* `misc_utils.py`:  miscellaneous utility methods (like a progress bar)
+* `preprocessing_utils.py`: utility methods for preprocessing
+    
 
 ## Getting Started
 
-We first need to retrieve the satellite data from 
+### Installing the Virtual Environment
+
+The first thing to do is to install the virtual environment (venv) using the `requirements.yml` file to ensure that all necessary packages are installed.
+
+To set up the virtual environment using Anaconda, run  
+
+```
+conda env create --file=requirements.yml
+```
+
+which sets up the venv `DORIS`. To activate the venv, run 
+
+```
+conda activate DORIS
+```
+
+### Downloading Sample Data
+
+Next, we need to download some sample data.
+One needs to register a free account at [https://urs.earthdata.nasa.gov](https://urs.earthdata.nasa.gov).
+
+Once registered, we can use the `download_DORIS_data.py` located in `scripts` to download some sample data.
+The script contains a help function which explains the usage.
+Run
+
+```
+python3 scripts/download_DORIS_data.py --help
+```
+to access the help function
+```
+usage: download_DORIS_data.py [-h] [-v VERBOSE] [-c [CENTER ...]]
+                              [-s [SAT ...]] [-b BEGIN] [-e END] [-o PATH]
+                              [-fn FILENAME]
+
+options:
+  -h, --help            show this help message and exit
+  -v VERBOSE, --verbose VERBOSE
+                        verbose (default: False)
+  -c [CENTER ...], --center [CENTER ...]
+                        list of 3-letter analysis center id (type "zzz" for
+                        full list) (default: ['zzz'])
+  -s [SAT ...], --sat [SAT ...]
+                        list of 3-letter sattelite id (type "zzz" for full
+                        list) (default: ['zzz'])
+  -b BEGIN, --begin BEGIN
+                        last 2 digits of year of first position (default: 0)
+  -e END, --end END     last 2 digits of year of last position (inlusive in
+                        search) (default: 0)
+  -o PATH, --path PATH  (create) directory to save .csv-file (default:
+                        /Users/donny/Documents/DORIS/sat/)
+  -fn FILENAME, --filename FILENAME
+                        filename.csv (including extension) (default: sat.csv)
+```
