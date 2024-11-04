@@ -123,10 +123,29 @@ conda activate DORIS
 Next, we need to download some sample data.
 One needs to register a free account at [https://urs.earthdata.nasa.gov](https://urs.earthdata.nasa.gov).
 
-Once registered, we can use the `download_DORIS_data.py` located in `scripts` to download some sample data.
-The script contains a help function which explains the usage.
-Run
+Once registered, we can use the `download_DORIS_data.py` located in `scripts` to download some sample data from [https://cddis.nasa.gov/archive/doris/products/orbits/](https://cddis.nasa.gov/archive/doris/products/orbits/).
 
+The CDDIS archive is built up as follows: there are 4 folders which store the satellite's data (position and velocity) recorded by a _analysis center_. The analysis centers are abriviated by three letters, for example _grc_. 
+<p align="center">
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/centers.png"/>
+</p>
+
+Within each such folder there are subfolders containing the data of specific satelleites. These folders are named by the satellite IDs given by three letters, for example _s6a_ (for _sentinel-6a_). 
+
+<p align="center">
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/sats.png"/>
+</p>
+
+These folders then finally contain the satellite data chopped up into several compressed (.Z) files.
+The compressed files contain a text document in the SP3c format lisiting position and velocity vectors of the satellite. More about the SP3c format and the naming convention of the files can be found in the provided literature (see [Data-Structure-Format.pdf](https://github.com/dHuberYoumans/DORIS/blob/main/literature/Data-Structure-Formats.pdf) and [SP3c_format.pdf](https://github.com/dHuberYoumans/DORIS/blob/main/literature/SP3c_format.pdf)).
+
+<p align="center">
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/data.png"/>
+</p>
+
+**Remark** There are two additional text document in each folder storing the actual satellite data. These contain a list of hash file pairs which can be used to ensure that the correct files were downloaded.
+
+The script `download_DORIS_data.py` downlaods the data for a specified time frame of a specified satellite and stores the data in a .csv file in a specified destination. It contains a help function which explains the usage; run
 ```
 python3 scripts/download_DORIS_data.py --help
 ```
@@ -155,3 +174,21 @@ options:
   -fn FILENAME, --filename FILENAME
                         filename.csv (including extension) (default: sat.csv)
 ```
+
+For example, running 
+```
+python3 ./scripts/download_DORIS_data.py -c gsc -s s6a -b 20 -e 22 -o "~/Desktop/tmp/" -fn "s6a_20_22.csv"
+```
+from the base folder of the project, we call the script `download_DORIS_data.py` with the options 
+* `-c` specifying which analysis center we want retrieve informations from
+* `-s` specifying which satellite data we are interessted in
+* `-b 20 -e 22` specifying that we want to retrieve all data starting from 2020 until 2022
+* `-o` specifying the path where to save the download
+* `-fn` specifying the filename of the output
+
+The script will therefore download and save the data of the satellite _s6a_ in the time frame _2020_ to _2022_ as observed by the analysis center _gsc_:
+
+<p align="center">
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/download_DORIS.gif" alt="animated" />
+</p>
+
