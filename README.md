@@ -189,6 +189,6 @@ from the base folder of the project, we call the script `download_DORIS_data.py`
 The script will therefore download and save the data of the satellite _s6a_ in the time frame _2020_ to _2022_ as observed by the analysis center _gsc_:
 
 <p align="center">
-  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/download_DORIS.gif" alt="animated" />
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/download_DORIS.gif" alt="animated" width=500px height=auto />
 </p>
 
