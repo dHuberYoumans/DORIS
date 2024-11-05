@@ -1,0 +1,63 @@
+Maneuver files format
+
+Columns Description
+------------------------------------------------------
+1-5 Satellite identification
+SPOT2
+SPOT4
+SPOT5
+TOPEX
+JASO1
+ENVI1
+JASO2
+CRYO2
+SARAL
+ 7-10 Beginning of maneuver: Year
+12-14 Beginning of maneuver: Day of year
+16-17 Beginning of maneuver: hour
+19-20 Beginning of maneuver: minute
+22-25 End of maneuver: Year
+27-29 End of maneuver: Day of year
+31-32 End of maneuver: hour
+34-35 End of maneuver: minute (last column for topex)
+37-39 Maneuver Type (only for SPOTs : 'MCC' for routine maneuver, 'MCO'  for inclination maneuver; N/A for other satellites => '   ')
+41-43 Maneuver parameter type:
+    005: (SPOTs) DV and acc are given in order T,R,L, null values for delta acc
+    006: (ENVISAT, CRYOSAT2) DV, acc, delta acc are given in order radial, along track, cross track 
+    007: (JASONs) DV and acc are given in order Q,S,W, null values for delta acc
+     
+45  number of burns (N) 
+do i = 1, N
+   k =(i-1)*232
+  (47+k)-(50+k): median date of maneuver: Year YYYY
+  (52+k)-(54+k): median date of maneuver: Day of year DDD
+  (56+k)-(57+k): median date of maneuver: hour HH
+  (59+k)-(60+k): median date of maneuver: minute MM
+  (62+k)-(67+k): median date of maneuver: second.mlsecond:  SS.mss
+  (69+k)-(88+k)  : boost duration (sec) [E20.13]
+  (90+k)-(109+k) : DV(1) (m/s)  [E20.13]
+  (111+k)-(130+k): DV(2) (m/s)  [E20.13]
+  (132+k)-(151+k): DV(3) (m/s)  [E20.13]
+  (153+k)-(172+k): acceleration, acc(1) (10-6m/s2)  [E20.13]
+  (174+k)-(193+k): acceleration, acc(2) (10-6m/s2)  [E20.13]
+  (195+k)-(214+k): acceleration, acc(3) (10-6m/s2) [E20.13]
+  (216+k)-(235+k): delta acc(1) wrt prediction (10-6m/s2)[E20.13]
+  (237+k)-(256+k): delta acc(2) wrt prediction (10-6m/s2)[E20.13]
+  (258+k)-(277+k): delta acc(3) wrt prediction (10-6m/s2)[E20.13]
+end do
+
+Example:
+------------------------------------------
+jaso1 2004 105 23 54 2004 106 00 45     007 2 2004 105 23 57 30.010 04.5020000000000e+00 01.6890000000000e-02 00.0000000000000e+00 00.0000000000000e+00 00.0000000000000e+00 03.7516659262550e+03 00.0000000000000e+00 00.0000000000000e+00 00.0000000000000e+00 00.0000000000000e+00 2004 106 00 25 10.345 04.5030000000000e+00  01.6890000000000e-02 00.0000000000000e+00 00.0000000000000e+00 00.0000000000000e+00 03.7508327781479e+03 00.0000000000000e+00 00.0000000000000e+00 00.0000000000000e+00 00.0000000000000e+00
+jaso1 2004 115 23 54 2004 116 00 45     007 1 2004 115 23 57 30.500 04.5020000000000e+00 01.6890000000000e-02 00.0000000000000e+00 00.0000000000000e+00 00.0000000000000e+00 03.7516659262550e+03 00.0000000000000e+00 00.0000000000000e+00 00.0000000000000e+00 00.0000000000000e+00
+
+LOCAL ORBITAL FRAMES DESCRIPTION
+
+1/ SPOTs : T, R, L = Tangage (Pitch), Roulis (Roll), Lacet (Yaw)
+2/ ENVISAT, CRYOSAT2: radial, along track, cross track
+3/ JASONs: Q, S, W
+
+Q = L = radial : colinear to the radial vector (from the Earth to the spacecraft)
+W = T = cross track : colinear to the orbital kinetic momemtun
+S = R = along track: Q x W in the velocity direction
+
