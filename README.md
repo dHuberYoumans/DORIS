@@ -24,6 +24,7 @@ Python scripts are provided to download data for various satellites, time frames
 - [Getting Started](#getting-started)
     * [Installing the Virtual Environment](#installing-the-virtual-environment)
     * [Downloading Sample Data](#downloading-sample-data)
+    * [Downloading Scheduled Manoeuvres](#downloading-scheduled-manoeuvres)
 
 ## Getting Around
 
@@ -191,4 +192,35 @@ The script will therefore download and save the data of the satellite _s6a_ in t
 <p align="center">
   <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/download_DORIS.gif" alt="animated" width=500px height=auto />
 </p>
+
+### Downloading Scheduled Manoeuvres
+
+In order to evaluate any model we build, we need to a way to verify when a manoeuvre was actually performed. 
+These orbital satellite manoeuvres are prescheduled and a list of their dates can be downloaded.
+
+The script `download_maneuver_schedule.py` scrapes [https://ids-doris.org/analysis-documents.html](https://ids-doris.org/analysis-documents.html) for FTP files containing the timestamps of the manoeuvres, satellite by satellite, and combines them into a .csv file 
+
+<p align="center">
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/download_DORIS.gif" alt="animated" width=500px height=auto />
+</p>
+
+**Remark** 
+The script creates a temporary folder `tmp/` inside `ref/` which it uses to first download and store all FTP files. It then parses the downloaded files and combines into a .csv file which is saved in `ref/`. Afterwards, it deletes `tmp/` including all stored FTP files. Information on the structure of the FTP files can be found in the documentation [man.readme]()
+
+The .csv file contains contains three columns
+
+* sat_id: satellite ID
+* start: timestamp when the manoeuvre started
+* end: timestamp when the manoeuvre ended
+
+Reading the .csv into a pandas data frame, the head of this data frame is shown below
+
+```
+sat_id	start	end
+0	srl	2013-02-27 13:14:00	2013-02-27 13:19:00
+1	srl	2013-02-27 14:58:00	2013-02-27 15:04:00
+2	srl	2013-03-01 15:51:00	2013-03-01 15:53:00
+3	srl	2013-03-02 06:03:00	2013-03-02 06:05:00
+4	srl	2013-03-03 02:10:00	2013-03-03 02:12:00
+```
 
