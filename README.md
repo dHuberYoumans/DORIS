@@ -300,6 +300,11 @@ By closer inspection one sees that the manoeuvre causes a ripple in the periodic
 The detection algorithm now aims to identify these ripples.
 
 To enhance the effect of the pattern breaking, we work with the first and second derivative of the feature.
+
+<p align="center">
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/pdot.png" hieght=400px width=auto />
+</p>
+
 As we are working with a time series, it is crucial to test for stationarity. 
 
 ```
@@ -351,6 +356,10 @@ The method fits a harmonic regression model to the feature. In order to improve 
 accordingly.
 
 The `residuals` can then be analysed for outliers, for example using a simple _Z-score_, _robust Z-score_ (_MAD-score_) or more complicated outlier detection algorithms.  
+
+<p align="center">
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/baseline_and_residuals.png" hieght=400px width=auto />
+</p>
 
 For more details and ideas we refer the interested reader to the  [notebook](https://github.com/dHuberYoumans/DORIS/blob/main/notebooks/finding_DORIS.ipynb).
 
