@@ -25,6 +25,14 @@ Python scripts are provided to download data for various satellites, time frames
     * [Installing the Virtual Environment](#installing-the-virtual-environment)
     * [Downloading Sample Data](#downloading-sample-data)
     * [Downloading Scheduled Manoeuvres](#downloading-scheduled-manoeuvres)
+ 
+- [Developing the Algorithm](#developing-the-algorithm)
+
+- [Theory](#theory)
+     * [Orbital Elements](#orbital-elements)
+     * [Harmoinc Regression](#harmonic-regression)
+     * [Common Outlier Detection Algorithms](#common-outlier-detection-algorithms)
+
 
 ## Getting Around
 
@@ -201,11 +209,11 @@ These orbital satellite manoeuvres are prescheduled and a list of their dates ca
 The script `download_maneuver_schedule.py` scrapes [https://ids-doris.org/analysis-documents.html](https://ids-doris.org/analysis-documents.html) for FTP files containing the timestamps of the manoeuvres, satellite by satellite, and combines them into a .csv file 
 
 <p align="center">
-  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/download_DORIS.gif" alt="animated" width=500px height=auto />
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/download_mans.gif" alt="animated" width=500px height=auto />
 </p>
 
 **Remark** 
-The script creates a temporary folder `tmp/` inside `ref/` which it uses to first download and store all FTP files. It then parses the downloaded files and combines into a .csv file which is saved in `ref/`. Afterwards, it deletes `tmp/` including all stored FTP files. Information on the structure of the FTP files can be found in the documentation [man.readme]()
+The script creates a temporary folder `tmp/` inside `ref/` which it uses to first download and store all FTP files. It then parses the downloaded files and combines into a .csv file which is saved in `ref/`. Afterwards, it deletes `tmp/` including all stored FTP files. Information on the structure of the FTP files can be found in the documentation [man.readme](https://github.com/dHuberYoumans/DORIS/blob/main/literature/man.readme)
 
 The .csv file contains contains three columns
 
@@ -223,4 +231,135 @@ sat_id	start	end
 3	srl	2013-03-02 06:03:00	2013-03-02 06:05:00
 4	srl	2013-03-03 02:10:00	2013-03-03 02:12:00
 ```
+
+## Developing the Algorithm
+
+Detialed information and the thought process beghind the development of the outlier detection algorithm is explained step by step in the [notebook](https://github.com/dHuberYoumans/DORIS/blob/main/notebooks/finding_DORIS.ipynb).
+We stress that this project is **work in progress** and we will add new ideas as we go along.
+
+However, we would like to point out some key ideas of how we approach this problem.
+
+### Methodology 
+After the download the data, we have read it into a pandas data frame. 
+
+As we are dealing with real-world data, it is messy and some preprocessing is required. For the sake of readibility and to mitigate error sources, using `sklearn.pipeline.Pipline`, we build a pipeline with custom transformers which 
+
+1. loads the data
+2. drops duplicated timestamp indices
+3. converts units into SI units
+4. computes orbital elements
+
+as shown in the code snippet below.
+
+```
+# LOADING AND PREPROCESSING SATELLITE DATA
+
+sat_path = str(cwd.parent)+'/sat/s6assa2024/s6assa_20_24.csv'
+
+if not os.path.isfile(sat_path):
+    raise Exception('Indicated path does not point to a valid file')
+
+# DEFINE CUSTOM TRANSFORMERS
+load_sat = preputls.LoadSingleSat(path=sat_path)
+drop_dupl_idx = preputls.DropDuplIdx()
+convert_units = preputls.ConvertUnits()
+compute_orbital_elements = preputls.OrbitalElements(type='all')
+
+# BUILD PIPELINE FOR PREPROCESSING
+prep_pipeline = Pipeline(
+    steps=[
+    ('load_sat', load_sat),                                 # load satellite data
+    ('drop_duplicated_idx', drop_dupl_idx),                 # drop duplicated indices
+    ('convert_units',convert_units),                        # convert units 
+    ('compute_orbital_elements',compute_orbital_elements)   # compute orbital elements
+])
+
+print('Loading data ... ',end='')
+
+# GET DATA FROM PIPELINE
+s6ssa = prep_pipeline.fit_transform(None)
+
+print('done.\n')
+
+# CHECK FOR NAN
+print('Checking for null-values:')
+print(s6ssa.isna().sum().value_counts())
+
+print('\n loading of satellite data complete.')
+```
+
+Computing orbital elements may be seen already a feature engineering. Indeed, orbital elements are conserved quantities which in the absence of all forces acting on the satellite would be constants of motions, i.e. constant throughout time. In this case, they would uniqule define the orbit of the satellite around earth. However, since the satellite is subject to various pertrubative forces, these features are not constant but show a oscillatory behaviour (see [Theory](#theory) for more on this). Nevertheless, the idea is to analyse the sinusoidal pattern of these orbital elements. 
+An example of such a feature, namely of the so-called _semi-parameter_ $p$, and its oscillatory nature is shown below:
+
+<p align="center">
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/p.png" hieght=400px width=auto />
+</p>
+
+The red dot indicates the time a manoeuvre took place. 
+By closer inspection one sees that the manoeuvre causes a ripple in the periodic pattern of the feature. 
+The detection algorithm now aims to identify these ripples.
+
+To enhance the effect of the pattern breaking, we work with the first and second derivative of the feature.
+As we are working with a time series, it is crucial to test for stationarity. 
+
+```
+# STATIONARITY: ADF (AUGMENTED DICKEY-FULLER) TEST 
+adf_test = pm.arima.ADFTest(alpha=0.05)
+
+
+# SINCE THE TIME SERIES HAS A LOT OF DATA POINTS, TEST FOR STATIONARITY IN SPECIFIED INTERVALS [start:end]
+start = 100_000
+end = 200_000
+
+print('Test of stationarity of dot_p$:')
+p_val, should_diff = adf_test.should_diff(dot_p[start:end])
+print(f'p value = {p_val}')
+print(f'stationary: {~should_diff}\n')
+
+print('Test of stationarity of ddot_p$:')
+p_val, should_diff = adf_test.should_diff(ddot_p[start:end])
+print(f'p value = {p_val}')
+print(f'stationary: {~should_diff}')
+
+--------------------------------------------------------------------
+Test of stationarity of dot_p$:
+p value = 0.01
+stationary: True
+
+Test of stationarity of ddot_p$:
+p value = 0.01
+stationary: True
+```
+It is tempting to use standard time series analysis methods such as (S)ARIMA. However, since the data is too large (sevral million entries) we have to follow a rolling window approach and the (S)ARIMA model overfits the data
+
+<p align="center">
+  <img src="https://github.com/dHuberYoumans/DORIS/blob/main/img/ARIMA.png" hieght=400px width=auto />
+</p>
+
+We therefore define a custom Harmonic Regression model `HarmonicRegression()`. The class contains a method `fit()` which takes the follwing input 
+* a feature (pandas Series)
+* a date of manoeuvre (string)
+* a time step (int, measured in hours) to define the window of observation 
+* a cut-off (float, default 1e-6) which determines when the method stops to improve the fit
+* and a verbose flag (bool) which, when set to `True` prints information about the numebr of harmonics which is fitted and the mean squared error compared to the actual observed data
+
+The method fits a harmonic regression model to the feature. In order to improve the fit, the method loops over the number of harmonics which are to be considered computing at each step the mean square error (MSE) to the actual observed data. Once the MSE falls below the cut-off parameter `eps`, the model stops and sets the attributes 
+* `n_harmonics` (number of harmonics used in the fit)
+* `y` (actual observed data),
+* `baseline` (fitted curve)
+* `residuals` (diffrence `y - baseline`)
+accordingly.
+
+The `residuals` can then be analysed for outliers, for example using a simple _Z-score_, _robust Z-score_ (_MAD-score_) or more complicated outlier detection algorithms.  
+
+For more details and ideas we refer the interested reader to the  [notebook](https://github.com/dHuberYoumans/DORIS/blob/main/notebooks/finding_DORIS.ipynb).
+
+## Theory
+
+### Orbital Elements
+
+### Harmoinc Regression
+
+### Common Outlier Detection Algorithms
+
 
